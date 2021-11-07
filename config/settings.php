@@ -43,15 +43,31 @@ $settings['logger'] = [
     'name' => 'app',
 ];
 
-$dbopts = parse_url(getenv('DATABASE_URL'));
+$dbopts = parse_url($_SERVER['DATABASE_URL']);
+
+// Get the driver from the URL scheme
+$dbDriver = (function ($scheme) {
+    switch ($scheme) {
+        case 'postgresql': 
+        case 'postgres':
+            return 'pgsql';
+        case 'mysql':
+            return 'mysql';
+        default:
+            // ¯\_(ツ)_/¯
+            return $scheme;
+    }
+}) ($dbopts['scheme']);
 
 // Database settings
 $settings['db'] = [
-    'driver'   => 'pgsql',
+    'driver'   => $dbDriver,
     'host'     => $dbopts['host'],
+    'port'     => isset($dbopts['port']) ? $dbopts['port'] : null,
     'username' => $dbopts['user'],
     'database' => ltrim($dbopts["path"],'/'),
     'password' => $dbopts['pass'],
+    'query'    => isset($dbopts['query']) ? $dbopts['query'] : null,
     'charset'  => 'UTF8',
     'flags'    => [
         // Turn off persistent connections
